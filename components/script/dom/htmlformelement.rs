@@ -15,6 +15,7 @@ use crate::dom::bindings::codegen::Bindings::HTMLInputElementBinding::HTMLInputE
 use crate::dom::bindings::codegen::Bindings::HTMLTextAreaElementBinding::HTMLTextAreaElementMethods;
 use crate::dom::bindings::codegen::Bindings::NodeListBinding::NodeListMethods;
 use crate::dom::bindings::codegen::Bindings::WindowBinding::WindowBinding::WindowMethods;
+use crate::dom::bindings::error::{Error, Fallible};
 use crate::dom::bindings::inheritance::{Castable, ElementTypeId, HTMLElementTypeId, NodeTypeId};
 use crate::dom::bindings::refcounted::Trusted;
 use crate::dom::bindings::reflector::DomObject;
@@ -242,6 +243,32 @@ impl HTMLFormElementMethods for HTMLFormElement {
     fn Submit(&self) {
         self.submit(SubmittedFrom::FromForm, FormSubmitter::FormElement(self));
     }
+
+    // https://html.spec.whatwg.org/multipage/forms.html#dom-form-requestsubmit
+     fn RequestSubmit(&self, &submitter: Option<HTMLElement>) {
+         match submitter {
+             Some(elem) => {
+                if elem.form_owner() != self.form {
+                    // If submitter's form owner is not this form element, then throw a "NotFoundError" DOMException.
+                    Err(Error::NotFoundError)
+                }
+
+                // TODO: form button
+                if elem.form_owner() {  
+                    // If submitter is not a submit button, then throw a TypeError.
+                    Err(Error::Type("duration is negative".to_owned()))
+                }
+             },
+             None => {
+                self.submit(SubmittedFrom::FromForm, FormSubmitter::FormElement(submitter));
+             }
+         }
+
+        // Submit this form element, from submitter.
+         self.submit(SubmittedFrom::FromForm, FormSubmitter::FormElement(self));
+        
+    }
+
 
     // https://html.spec.whatwg.org/multipage/#dom-form-reset
     fn Reset(&self) {
